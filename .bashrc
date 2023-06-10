@@ -2,7 +2,6 @@ alias ls='exa --long --header --git'
 alias l='exa --all --long --header --git'
 alias g='ghq'
 alias bat='batcat'
-alias wakepc='wakeonlan 24:4B:FE:48:37:A6'
 
 ex ()
 {
