@@ -26,7 +26,9 @@ jobs:
       run: |
         GOOS=${{ matrix.platform %%-* }}
         GOARCH=${{ matrix.platform ##*- }}
+        go env
         go build -v -o dotfiles-${{ matrix.platform }} .
+      shell: bash
 
     - name: Archive production artifacts
       uses: actions/upload-artifact@v3
