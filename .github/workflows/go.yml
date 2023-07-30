@@ -51,6 +51,7 @@ jobs:
         name: dotfiles-${{ matrix.goos }}-${{ matrix.goarch }}
 
     - name: Upload Release Asset
+      if: github.event_name == 'release'  # Only run if this workflow was triggered by a release
       uses: softprops/action-gh-release@v1
       with:
         files: ./dotfiles-${{ matrix.goos }}-${{ matrix.goarch }}
