@@ -39,6 +39,8 @@ jobs:
   upload:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     strategy:
       matrix:
         goos: [linux]
