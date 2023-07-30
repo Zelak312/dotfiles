@@ -11,8 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        goos: [linux, linux]
-        goarch: [amd64, arm64]
+        platform: ['linux-amd64', 'linux-arm64']
 
     steps:
     - name: Set up Go
@@ -24,35 +23,34 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Build
-      env:
-        GOOS: ${{ matrix.goos }}
-        GOARCH: ${{ matrix.goarch }}
       run: |
-        go build -v -o dotfiles-${{ matrix.goos }}-${{ matrix.goarch }} .  # build and name output file
+        GOOS=${{ matrix.platform %%-* }}
+        GOARCH=${{ matrix.platform ##*- }}
+        go build -v -o dotfiles-${{ matrix.platform }} .
 
     - name: Archive production artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: dotfiles-${{ matrix.goos }}-${{ matrix.goarch }}
-        path: ./dotfiles-${{ matrix.goos }}-${{ matrix.goarch }}  # use the path to your built binary
+        name: dotfiles-${{ matrix.platform }}
+        path: ./dotfiles-${{ matrix.platform }}
 
   upload:
     needs: build
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        goos: [linux, linux]
-        goarch: [amd64, arm64]
+        platform: ['linux-amd64', 'linux-arm64']
 
     steps:
     - name: Download a build artifact
       uses: actions/download-artifact@v3
       with:
-        name: dotfiles-${{ matrix.goos }}-${{ matrix.goarch }}
+        name: dotfiles-${{ matrix.platform }}
 
     - name: Upload Release Asset
+      if: github.event_name == 'release'  # Only run if this workflow was triggered by a release
       uses: softprops/action-gh-release@v1
       with:
-        files: ./dotfiles-${{ matrix.goos }}-${{ matrix.goarch }}
+        files: dotfiles-${{ matrix.platform }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
