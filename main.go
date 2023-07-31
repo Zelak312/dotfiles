@@ -29,53 +29,117 @@ func main() {
 	survey.AskOne(qs, &configIndexes)
 
 	for _, index := range configIndexes {
+		fmt.Println("Installing: " + qs.Options[index])
+		installStatus := false
 		switch index {
 		case 0:
-			installStarship(pwd, dirname)
+			installStatus = installStarship(pwd, dirname)
 		case 1:
-			installBashrc(pwd, dirname)
+			installStatus = installBashrc(pwd, dirname)
 		case 2:
-			installGitconfig(pwd, dirname)
+			installStatus = installGitconfig(pwd, dirname)
 		}
+
+		if installStatus {
+			fmt.Println("Success")
+		} else {
+			fmt.Println("Failed")
+		}
+
+		fmt.Println()
 	}
 }
 
-func installStarship(pwd string, homedir string) {
+func CheckHandleFileExist(file string) bool {
+	if _, err := os.Stat(file); err == os.ErrNotExist {
+		return true
+	}
+
+	delete := false
+	prompt := &survey.Confirm{
+		Message: "File: " + file + " already exists, do you want to delete it?",
+	}
+	survey.AskOne(prompt, &delete)
+
+	if delete {
+		err := os.Remove(file)
+		if err != nil {
+			fmt.Println(err)
+			return false
+		}
+	}
+
+	return delete
+}
+
+func installStarship(pwd string, homedir string) bool {
 	target := path.Join(homedir, ".config", "starship.toml")
 	file := path.Join(pwd, ".config", "starship.toml")
 	err := os.MkdirAll(path.Dir(file), 0755)
 	if err != nil {
 		fmt.Println(err)
+		return false
+	}
+
+	continueInstall := CheckHandleFileExist(target)
+	if !continueInstall {
+		return false
 	}
 
 	err = os.Symlink(file, target)
 	if err != nil {
 		fmt.Println(err)
+		return false
 	}
+
+	return true
 }
 
-func installBashrc(pwd string, homedir string) {
+func installBashrc(pwd string, homedir string) bool {
 	target := path.Join(homedir, ".bashrc_ext")
 	file := path.Join(pwd, ".bashrc_ext")
+
+	continueInstall := CheckHandleFileExist(target)
+	if !continueInstall {
+		return false
+	}
+
 	err := os.Symlink(file, target)
 	if err != nil {
 		fmt.Println(err)
+		return false
 	}
 
 	f, err := os.OpenFile(path.Join(homedir, ".bashrc"), os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println(err)
+		return false
 	}
 
 	defer f.Close()
-	f.WriteString("\nsource ~/.bashrc_ext\n")
+	_, err = f.WriteString("\nsource ~/.bashrc_ext\n")
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	return true
 }
 
-func installGitconfig(pwd string, homedir string) {
+func installGitconfig(pwd string, homedir string) bool {
 	target := path.Join(homedir, ".gitconfig")
 	file := path.Join(pwd, ".gitconfig")
+
+	continueInstall := CheckHandleFileExist(target)
+	if !continueInstall {
+		return false
+	}
+
 	err := os.Symlink(file, target)
 	if err != nil {
 		fmt.Println(err)
+		return false
 	}
+
+	return true
 }
