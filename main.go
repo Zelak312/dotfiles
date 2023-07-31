@@ -67,7 +67,8 @@ func installBashrc(pwd string, homedir string) {
 		fmt.Println(err)
 	}
 
-	f.Close()
+	defer f.Close()
+	f.WriteString("\nsource ~/.bashrc_ext\n")
 }
 
 func installGitconfig(pwd string, homedir string) {
