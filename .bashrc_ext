@@ -1,7 +1,18 @@
-alias ls='exa --long --header --git'
-alias l='exa --all --long --header --git'
-alias g='ghq'
-alias bat='batcat'
+# Check if the command 'exa' exists
+command -v exa >/dev/null 2>&1 && {
+    alias ls='exa --long --header --git'
+    alias l='exa --all --long --header --git'
+}
+
+# Check if the command 'ghq' exists
+command -v ghq >/dev/null 2>&1 && {
+    alias g='ghq'
+}
+
+# Check if the command 'batcat' exists
+command -v batcat >/dev/null 2>&1 && {
+    alias bat='batcat'
+}
 
 ex ()
 {
