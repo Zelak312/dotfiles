@@ -1,12 +1,6 @@
 [user]
 	email = zelak312@gmail.com
 	name = Zelak312
-	signingkey = key::ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFHuclu80SzvG1PLk5o6G+zgyQBeDSGrHQvp32v3r3lM zelak312@gmail.com
-[gpg]
-	program = gpg
-	format = ssh
-[commit]
-	gpgsign = true
 [filter "lfs"]
 	process = git-lfs filter-process
 	required = true
