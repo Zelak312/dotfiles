@@ -1,12 +1,14 @@
 [user]
-	email = zelak312@gmail.com
-	name = Zelak312
+    email = zelak312@gmail.com
+    name = Zelak312
 [filter "lfs"]
-	process = git-lfs filter-process
-	required = true
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
+    process = git-lfs filter-process
+    required = true
+    clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
 [init]
-	defaultBranch = main
+    defaultBranch = main
 [diff]
-	external = difft
+    external = difft
+[pull]
+    rebase = false
