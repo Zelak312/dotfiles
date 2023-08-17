@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 )
@@ -117,10 +119,22 @@ func installBashrc(pwd string, homedir string) bool {
 	}
 
 	defer f.Close()
-	_, err = f.WriteString("\nsource ~/.bashrc_ext\n")
-	if err != nil {
-		fmt.Println(err)
-		return false
+	// check if source is already in bashrc
+	bashrcLine := "source ~/.bashrc_ext"
+	scanner := bufio.NewScanner(f)
+	found := false
+	for scanner.Scan() {
+		if strings.TrimSpace(scanner.Text()) == strings.TrimSpace(bashrcLine) {
+			found = true
+		}
+	}
+
+	if !found {
+		_, err = f.WriteString(fmt.Sprintf("\n%s\n", bashrcLine))
+		if err != nil {
+			fmt.Println(err)
+			return false
+		}
 	}
 
 	return true
