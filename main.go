@@ -1,17 +1,19 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 )
 
 var qs = &survey.MultiSelect{
 	Message: "What do you want to install?",
-	Options: []string{"starship config", "bashrc extension", "gitconfig"},
+	Options: []string{"starship config", "bashrc extension", "gitconfig", "motd-diskspace"},
 }
 
 func main() {
@@ -38,6 +40,8 @@ func main() {
 			installStatus = installBashrc(pwd, dirname)
 		case 2:
 			installStatus = installGitconfig(pwd, dirname)
+		case 3:
+			installStatus = installMotdDiskspace(pwd, dirname)
 		}
 
 		if installStatus {
@@ -50,8 +54,16 @@ func main() {
 	}
 }
 
+func isFileExist(file string) bool {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		return false
+	}
+
+	return true
+}
+
 func CheckHandleFileExist(file string) bool {
-	if _, err := os.Stat(file); err == os.ErrNotExist {
+	if !isFileExist(file) {
 		return true
 	}
 
@@ -117,10 +129,22 @@ func installBashrc(pwd string, homedir string) bool {
 	}
 
 	defer f.Close()
-	_, err = f.WriteString("\nsource ~/.bashrc_ext\n")
-	if err != nil {
-		fmt.Println(err)
-		return false
+	// check if source is already in bashrc
+	bashrcLine := "source ~/.bashrc_ext"
+	scanner := bufio.NewScanner(f)
+	found := false
+	for scanner.Scan() {
+		if strings.TrimSpace(scanner.Text()) == strings.TrimSpace(bashrcLine) {
+			found = true
+		}
+	}
+
+	if !found {
+		_, err = f.WriteString(fmt.Sprintf("\n%s\n", bashrcLine))
+		if err != nil {
+			fmt.Println(err)
+			return false
+		}
 	}
 
 	return true
@@ -129,6 +153,30 @@ func installBashrc(pwd string, homedir string) bool {
 func installGitconfig(pwd string, homedir string) bool {
 	target := path.Join(homedir, ".gitconfig")
 	file := path.Join(pwd, ".gitconfig")
+
+	continueInstall := CheckHandleFileExist(target)
+	if !continueInstall {
+		return false
+	}
+
+	err := os.Symlink(file, target)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	return true
+}
+
+func installMotdDiskspace(pwd string, homedir string) bool {
+	folder := "/etc/update-motd.d"
+	if !isFileExist(folder) {
+		fmt.Println("Folder: " + folder + " does not exist\nCan't install motd-diskspace")
+		return false
+	}
+
+	target := path.Join(folder, "30-diskspace")
+	file := path.Join(pwd, "30-diskspace")
 
 	continueInstall := CheckHandleFileExist(target)
 	if !continueInstall {
