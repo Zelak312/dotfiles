@@ -87,7 +87,7 @@ func CheckHandleFileExist(file string) bool {
 func installStarship(pwd string, homedir string) bool {
 	target := path.Join(homedir, ".config", "starship.toml")
 	file := path.Join(pwd, ".config", "starship.toml")
-	err := os.MkdirAll(path.Dir(file), 0755)
+	err := os.MkdirAll(path.Dir(target), 0755)
 	if err != nil {
 		fmt.Println(err)
 		return false
