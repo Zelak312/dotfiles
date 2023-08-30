@@ -26,3 +26,5 @@ dotfiles
 go.work
 
 # End of https://www.toptal.com/developers/gitignore/api/go
+
+node_modules
