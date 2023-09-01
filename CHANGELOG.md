@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2023-09-01
+
+### Features
+
+- Permission escalation on permission error
+
 ## [1.0.5] - 2023-08-30
 
 ### Bug Fixes
