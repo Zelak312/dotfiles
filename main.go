@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 
@@ -185,8 +186,17 @@ func installMotdDiskspace(pwd string, homedir string) bool {
 
 	err := os.Symlink(file, target)
 	if err != nil {
-		fmt.Println(err)
-		return false
+		if !os.IsPermission(err) {
+			fmt.Println(err)
+			return false
+		}
+
+		fmt.Println("Permission error, escalating permissions")
+		err := exec.Command("sudo", "ln", "-s", file, target).Run()
+		if err != nil {
+			fmt.Println(err)
+			return false
+		}
 	}
 
 	return true
