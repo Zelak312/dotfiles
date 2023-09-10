@@ -16,8 +16,50 @@ command -v batcat >/dev/null 2>&1 && {
 
 alias dcul='docker compose up -d && docker compose logs -f'
 
-ex ()
-{
+cd() {
+    if [[ $1 == ..[0-9]* ]]; then
+        local count="${1:2}"
+        local target=""
+        for ((i=0; i<count; i++)); do
+            target+="../"
+        done
+        builtin cd "$target"
+    else
+        builtin cd "$@"
+    fi
+    ls
+}
+
+declare -A saved_dirs
+spwd() {
+    local name="default"
+    if [[ ! -z "$1" ]]; then
+        name="$1"
+    fi
+    saved_dirs["$name"]=$(pwd)
+    echo "Saved current directory as '$name'."
+}
+
+rpwd() {
+    local name="default"
+    if [[ ! -z "$1" ]]; then
+        name="$1"
+    fi
+
+    if [[ ! -z "${saved_dirs["$name"]}" ]]; then
+        cd "${saved_dirs["$name"]}" || return 1
+    else
+        echo "No saved directory found for '$name'."
+    fi
+}
+
+lpwd() {
+    for name in "${!saved_dirs[@]}"; do
+        echo "$name: ${saved_dirs[$name]}"
+    done
+}
+
+ex() {
 	if [ -f "$1" ] ; then
 		case $1 in
 			*.tar.bz2)   tar xjf $1   ;;
@@ -39,9 +81,4 @@ ex ()
 	else
 		echo "'$1' is not a valid file"
 	fi
-}
-
-function cdl() {
-	cd "$1"
-	ls
 }
