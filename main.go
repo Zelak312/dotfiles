@@ -14,7 +14,7 @@ import (
 
 var qs = &survey.MultiSelect{
 	Message: "What do you want to install?",
-	Options: []string{"starship config", "bashrc extension", "gitconfig", "motd-diskspace"},
+	Options: []string{"starship config", "bashrc extension", "gitconfig", "motd-diskspace", "alacritty config"},
 }
 
 func main() {
@@ -43,6 +43,8 @@ func main() {
 			installStatus = installGitconfig(pwd, dirname)
 		case 3:
 			installStatus = installMotdDiskspace(pwd, dirname)
+		case 4:
+			installStatus = installAlacritty(pwd, dirname)
 		}
 
 		if installStatus {
@@ -88,6 +90,29 @@ func CheckHandleFileExist(file string) bool {
 func installStarship(pwd string, homedir string) bool {
 	target := path.Join(homedir, ".config", "starship.toml")
 	file := path.Join(pwd, ".config", "starship.toml")
+	err := os.MkdirAll(path.Dir(target), 0755)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	continueInstall := CheckHandleFileExist(target)
+	if !continueInstall {
+		return false
+	}
+
+	err = os.Symlink(file, target)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	return true
+}
+
+func installAlacritty(pwd string, homedir string) bool {
+	target := path.Join(homedir, ".config", "alacritty", "alacritty.yml")
+	file := path.Join(pwd, ".config", "alacritty", "alacritty.yml")
 	err := os.MkdirAll(path.Dir(target), 0755)
 	if err != nil {
 		fmt.Println(err)
