@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2023-10-14
+
+### Features
+
+- Cd with ..2, ..3, ..n options + fs & saving pwd utility
+- Alacritty config
+
+### Miscellaneous Tasks
+
+- Install lefthook on npm i
+
 ## [1.1.0] - 2023-09-01
 
 ### Features
