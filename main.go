@@ -14,7 +14,7 @@ import (
 
 var qs = &survey.MultiSelect{
 	Message: "What do you want to install?",
-	Options: []string{"starship config", "bashrc extension", "gitconfig", "motd-diskspace", "alacritty config"},
+	Options: []string{"starship config", "bashrc extension", "gitconfig", "motd-diskspace", "alacritty config", "atuin config"},
 }
 
 func main() {
@@ -45,6 +45,8 @@ func main() {
 			installStatus = installMotdDiskspace(pwd, dirname)
 		case 4:
 			installStatus = installAlacritty(pwd, dirname)
+		case 5:
+			installStatus = installAutin(pwd, dirname)
 		}
 
 		if installStatus {
@@ -65,7 +67,7 @@ func isFileExist(file string) bool {
 	return true
 }
 
-func CheckHandleFileExist(file string) bool {
+func CheckHandleFileExist(file string, isFolder bool) bool {
 	if !isFileExist(file) {
 		return true
 	}
@@ -74,13 +76,26 @@ func CheckHandleFileExist(file string) bool {
 	prompt := &survey.Confirm{
 		Message: "File: " + file + " already exists, do you want to delete it?",
 	}
+
+	if isFolder {
+		prompt.Message = "Folder: " + file + " is not empty, are you sure you want to delete it?"
+	}
 	survey.AskOne(prompt, &delete)
 
 	if delete {
-		err := os.Remove(file)
+		var err error
+		if isFolder {
+			err = os.RemoveAll(file)
+		} else {
+			err = os.Remove(file)
+		}
 		if err != nil {
-			fmt.Println(err)
-			return false
+			if strings.Contains(err.Error(), "directory not empty") {
+				CheckHandleFileExist(file, true)
+			} else {
+				fmt.Println(err)
+				return false
+			}
 		}
 	}
 
@@ -96,7 +111,7 @@ func installStarship(pwd string, homedir string) bool {
 		return false
 	}
 
-	continueInstall := CheckHandleFileExist(target)
+	continueInstall := CheckHandleFileExist(target, false)
 	if !continueInstall {
 		return false
 	}
@@ -111,15 +126,38 @@ func installStarship(pwd string, homedir string) bool {
 }
 
 func installAlacritty(pwd string, homedir string) bool {
-	target := path.Join(homedir, ".config", "alacritty", "alacritty.yml")
-	file := path.Join(pwd, ".config", "alacritty", "alacritty.yml")
+	target := path.Join(homedir, ".config", "alacritty")
+	file := path.Join(pwd, ".config", "alacritty")
 	err := os.MkdirAll(path.Dir(target), 0755)
 	if err != nil {
 		fmt.Println(err)
 		return false
 	}
 
-	continueInstall := CheckHandleFileExist(target)
+	continueInstall := CheckHandleFileExist(target, false)
+	if !continueInstall {
+		return false
+	}
+
+	err = os.Symlink(file, target)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	return true
+}
+
+func installAutin(pwd string, homedir string) bool {
+	target := path.Join(homedir, ".config", "atuin")
+	file := path.Join(pwd, ".config", "atuin")
+	err := os.MkdirAll(path.Dir(target), 0755)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	continueInstall := CheckHandleFileExist(target, false)
 	if !continueInstall {
 		return false
 	}
@@ -137,7 +175,7 @@ func installBashrc(pwd string, homedir string) bool {
 	target := path.Join(homedir, ".bashrc_ext")
 	file := path.Join(pwd, ".bashrc_ext")
 
-	continueInstall := CheckHandleFileExist(target)
+	continueInstall := CheckHandleFileExist(target, false)
 	if !continueInstall {
 		return false
 	}
@@ -180,7 +218,7 @@ func installGitconfig(pwd string, homedir string) bool {
 	target := path.Join(homedir, ".gitconfig")
 	file := path.Join(pwd, ".gitconfig")
 
-	continueInstall := CheckHandleFileExist(target)
+	continueInstall := CheckHandleFileExist(target, false)
 	if !continueInstall {
 		return false
 	}
@@ -204,7 +242,7 @@ func installMotdDiskspace(pwd string, homedir string) bool {
 	target := path.Join(folder, "30-diskspace")
 	file := path.Join(pwd, "30-diskspace")
 
-	continueInstall := CheckHandleFileExist(target)
+	continueInstall := CheckHandleFileExist(target, false)
 	if !continueInstall {
 		return false
 	}
