@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - 2023-10-29
+
+### Features
+
+- Add atuin config
+
 ## [1.1.1] - 2023-10-14
 
 ### Features
