@@ -82,3 +82,8 @@ ex() {
 		echo "'$1' is not a valid file"
 	fi
 }
+
+mkcd() {
+  mkdir -p "$1"
+  cd "$1"
+}
