@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.3] - 2023-11-01
+
+### Bug Fixes
+
+- Not found .bashrc_ext in .bashrc correctly
+
+### Features
+
+- Add mkcd command
+
 ## [1.1.2] - 2023-10-29
 
 ### Features
