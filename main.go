@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -186,21 +187,29 @@ func installBashrc(pwd string, homedir string) bool {
 		return false
 	}
 
-	f, err := os.OpenFile(path.Join(homedir, ".bashrc"), os.O_APPEND|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(path.Join(homedir, ".bashrc"), os.O_RDWR, 0644)
 	if err != nil {
 		fmt.Println(err)
 		return false
 	}
-
 	defer f.Close()
-	// check if source is already in bashrc
+
+	// Check if source is already in bashrc
 	bashrcLine := "source ~/.bashrc_ext"
 	scanner := bufio.NewScanner(f)
 	found := false
 	for scanner.Scan() {
 		if strings.TrimSpace(scanner.Text()) == strings.TrimSpace(bashrcLine) {
 			found = true
+			break // Found it, no need to keep scanning
 		}
+	}
+
+	// Seek back to the end for appending
+	_, err = f.Seek(0, io.SeekEnd)
+	if err != nil {
+		fmt.Println("Error seeking:", err)
+		return false
 	}
 
 	if !found {
