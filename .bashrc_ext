@@ -89,5 +89,6 @@ mkcd() {
 }
 
 dotfiles_update() {
+    git pull
     ARCH=$(uname -m); if [ "$ARCH" = "x86_64" ]; then ARCH="amd64"; else ARCH="arm64"; fi; URL=$(curl -s https://api.github.com/repos/Zelak312/dotfiles/releases/latest | jq -r --arg ARCH "$ARCH" '.assets[] | select(.name | contains("dotfiles-linux-"+$ARCH)) | .browser_download_url'); TEMP=$(mktemp) && curl -L -o $TEMP $URL && chmod +x $TEMP && $TEMP && rm $TEMP
 }
