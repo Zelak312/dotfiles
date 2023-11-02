@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.4] - 2023-11-02
+
+### Features
+
+- Add dotfiles_update bash command
+- Add git pull to dotfiles_update command
+- Add vim config
+
 ## [1.1.3] - 2023-11-01
 
 ### Bug Fixes
