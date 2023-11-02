@@ -15,7 +15,8 @@ import (
 
 var qs = &survey.MultiSelect{
 	Message: "What do you want to install?",
-	Options: []string{"starship config", "bashrc extension", "gitconfig", "motd-diskspace", "alacritty config", "atuin config"},
+	Options: []string{"starship config", "bashrc extension", "gitconfig", "motd-diskspace", "alacritty config", "atuin config",
+		"vim config"},
 }
 
 func main() {
@@ -48,6 +49,8 @@ func main() {
 			installStatus = installAlacritty(pwd, dirname)
 		case 5:
 			installStatus = installAutin(pwd, dirname)
+		case 6:
+			installStatus = installVimConfig(pwd, dirname)
 		}
 
 		if installStatus {
@@ -269,6 +272,24 @@ func installMotdDiskspace(pwd string, homedir string) bool {
 			fmt.Println(err)
 			return false
 		}
+	}
+
+	return true
+}
+
+func installVimConfig(pwd string, homedir string) bool {
+	target := path.Join(homedir, ".vimrc")
+	file := path.Join(pwd, ".vimrc")
+
+	continueInstall := CheckHandleFileExist(target, false)
+	if !continueInstall {
+		return false
+	}
+
+	err := os.Symlink(file, target)
+	if err != nil {
+		fmt.Println(err)
+		return false
 	}
 
 	return true
