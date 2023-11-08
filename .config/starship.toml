@@ -9,17 +9,17 @@ success_symbol = "[>](bold green)"
 error_symbol = "[>](bold red)"
 
 [directory]
-style = "bold purple"
+format = " [>](bold green) [$path](bold purple) "
 
 [username]
 style_user = "#ff8533"
-format = "[$user]($style) [>](bold green) "
+format = "[$user]($style)"
 show_always = true
 
 [hostname]
 ssh_symbol = ""
 style = "bold purple"
-format = "[$ssh_symbol$hostname]($style) [>](bold green) "
+format = "[\\[$ssh_symbol$hostname\\]]($style)"
 
 [cmd_duration]
 format = "[time](bold green) [$duration]($style) "
