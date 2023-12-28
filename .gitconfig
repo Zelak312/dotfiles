@@ -8,7 +8,5 @@
     smudge = git-lfs smudge -- %f
 [init]
     defaultBranch = main
-[diff]
-    external = difft
 [pull]
     rebase = false
