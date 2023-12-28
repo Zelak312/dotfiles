@@ -15,6 +15,8 @@ command -v batcat >/dev/null 2>&1 && {
 }
 
 alias dcul='docker compose up -d && docker compose logs -f'
+alias dcup='docker compose pull && docker compose down && dcul'
+alias update='sudo apt update && sudo apt upgrade -y'
 
 cd() {
     if [[ $1 == ..[0-9]* ]]; then
@@ -91,4 +93,36 @@ mkcd() {
 dotfiles_update() {
     git pull
     ARCH=$(uname -m); if [ "$ARCH" = "x86_64" ]; then ARCH="amd64"; else ARCH="arm64"; fi; URL=$(curl -s https://api.github.com/repos/Zelak312/dotfiles/releases/latest | jq -r --arg ARCH "$ARCH" '.assets[] | select(.name | contains("dotfiles-linux-"+$ARCH)) | .browser_download_url'); TEMP=$(mktemp) && curl -L -o $TEMP $URL && chmod +x $TEMP && $TEMP && rm $TEMP
+}
+
+backup() {
+    local backup_name=""
+    local files=()
+
+    # Loop through the arguments
+    for arg in "$@"; do
+        if [[ "$arg" == "--name" ]]; then
+            backup_name=true
+        elif [[ "$backup_name" == true ]]; then
+            backup_name="$arg"
+            backup_name="${backup_name}.tar.gz" # Ensuring the file extension
+        else
+            files+=("$arg")
+        fi
+    done
+
+    # Check if files are provided
+    if [ ${#files[@]} -eq 0 ]; then
+        echo "Usage: backup [--name custom_name] [folder1] [folder2] [file1] ..."
+        return 1
+    fi
+
+    # Set default name if not provided
+    if [[ -z "$backup_name" ]]; then
+        backup_name="backup_$(date +%Y%m%d_%H%M%S).tar.gz"
+    fi
+
+    # Create the backup
+    tar -czf "$backup_name" -- "${files[@]}"
+    echo "Backup created: $backup_name"
 }
