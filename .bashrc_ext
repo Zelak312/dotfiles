@@ -14,6 +14,7 @@ command -v batcat >/dev/null 2>&1 && {
     alias bat='batcat'
 }
 
+alias lzd='lazydocker'
 alias dcul='docker compose up -d && docker compose logs -f'
 alias dcup='docker compose pull && docker compose down && dcul'
 alias update='sudo apt update && sudo apt upgrade -y'
@@ -126,3 +127,9 @@ backup() {
     tar -czf "$backup_name" -- "${files[@]}"
     echo "Backup created: $backup_name"
 }
+
+# on startup
+# Check if tmux is installed and automatically start tmux on SSH login
+if command -v tmux &> /dev/null && [ -z "$TMUX" ] && [ -n "$SSH_CONNECTION" ]; then
+    tmux -u attach-session -t ssh_tmux || tmux -u new-session -s ssh_tmux
+fi
