@@ -16,7 +16,7 @@ import (
 var qs = &survey.MultiSelect{
 	Message: "What do you want to install?",
 	Options: []string{"starship config", "bashrc extension", "gitconfig", "motd-diskspace", "alacritty config", "atuin config",
-		"vim config"},
+		"vim config", "tmux config"},
 }
 
 func main() {
@@ -51,6 +51,8 @@ func main() {
 			installStatus = installAutin(pwd, dirname)
 		case 6:
 			installStatus = installVimConfig(pwd, dirname)
+		case 7:
+			installStatus = installTmuxConfig(pwd, dirname)
 		}
 
 		if installStatus {
@@ -280,6 +282,24 @@ func installMotdDiskspace(pwd string, homedir string) bool {
 func installVimConfig(pwd string, homedir string) bool {
 	target := path.Join(homedir, ".vimrc")
 	file := path.Join(pwd, ".vimrc")
+
+	continueInstall := CheckHandleFileExist(target, false)
+	if !continueInstall {
+		return false
+	}
+
+	err := os.Symlink(file, target)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	return true
+}
+
+func installTmuxConfig(pwd string, homedir string) bool {
+	target := path.Join(homedir, ".tmux.conf")
+	file := path.Join(pwd, ".tmux.conf")
 
 	continueInstall := CheckHandleFileExist(target, false)
 	if !continueInstall {
