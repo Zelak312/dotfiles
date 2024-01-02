@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.5] - 2024-01-02
+
+### Bug Fixes
+
+- Remove difft, not there in most my servers
+
+### Features
+
+- Changed starshipe config
+- Update bashrc_ext, new stuff
+- Lazydocker + tmux on ssh login
+- Add tmux config install
+
 ## [1.1.4] - 2023-11-02
 
 ### Features
