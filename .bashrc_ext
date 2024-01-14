@@ -136,6 +136,14 @@ check_ports() {
     ss -tuln | grep ":$1"
 }
 
+git_stash_diff() {
+    if [ $# -eq 0 ]; then
+        git stash show -p
+    else
+        git stash show -p stash@{"$1"}
+    fi
+}
+
 # on startup
 # Check if tmux is installed and automatically start tmux on SSH login
 if command -v tmux &> /dev/null && [ -z "$TMUX" ] && [ -n "$SSH_CONNECTION" ]; then
