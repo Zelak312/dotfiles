@@ -128,6 +128,14 @@ backup() {
     echo "Backup created: $backup_name"
 }
 
+check_ports() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: check_ports <range>"
+        return 1
+    fi
+    ss -tuln | grep ":$1"
+}
+
 # on startup
 # Check if tmux is installed and automatically start tmux on SSH login
 if command -v tmux &> /dev/null && [ -z "$TMUX" ] && [ -n "$SSH_CONNECTION" ]; then
