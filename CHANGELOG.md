@@ -6,7 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Features
 
+- Atuin frequency auto
+- Check port range command
+- Add git stash diff command
+- Add better config for vim
+- Add dclf (log follow for docker compose
 - Add more docker compose aliases
+
+### Miscellaneous Tasks
+
+- Merge conflict resolve
 
 ## [1.1.5] - 2024-01-02
 
