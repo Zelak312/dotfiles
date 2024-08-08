@@ -17,6 +17,8 @@ command -v batcat >/dev/null 2>&1 && {
 alias lzd='lazydocker'
 alias dcul='docker compose up -d && docker compose logs -f'
 alias dcup='docker compose pull && docker compose down && dcul'
+alias dcd='docker compose down'
+alias dcb='docker compose build'
 alias update='sudo apt update && sudo apt upgrade -y'
 
 cd() {
