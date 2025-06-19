@@ -1,0 +1,7 @@
+[user]
+	email = zelak312@gmail.com
+	name = Zelak312
+[init]
+	defaultBranch = main
+[pull]
+	rebase = false
