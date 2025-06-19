@@ -528,3 +528,12 @@ help_ext() {
         
     done < <(grep -n -E "^[[:space:]]*(function[[:space:]]+[a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\))" "$file" | cut -d: -f1)
 }
+
+# On startup
+# Check if tmux is installed and automatically start tmux on SSH login
+if command -v tmux &> /dev/null && [ -z "$TMUX" ] && [ -n "$SSH_CONNECTION" ]; then
+    # Check if connection doesn't come from vscode
+    if [[ -z "$VSCODE_IPC_HOOK_CLI" && "$TERM_PROGRAM" != "vscode" ]]; then
+        tmux -u attach-session -t ssh_tmux || tmux -u new-session -s ssh_tmux
+    fi
+fi
