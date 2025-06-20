@@ -1,4 +1,5 @@
 set pastetoggle=<F2>
+nnoremap <F3> :set number!<CR>
 syntax on
 set number
 set expandtab
