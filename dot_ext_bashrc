@@ -3,16 +3,28 @@ command -v batcat >/dev/null 2>&1 && {
     alias bat='batcat'
 }
 
+confirm() {
+  local message="${1:-Are you sure?}"
+  read -p "$message [y/N] " ans
+  [[ "$ans" == [Yy] ]]
+}
+
 dcul() {
     docker compose up -d "$@" && docker compose logs -f "$@"
 }
 
 dcupd() {
+    confirm "This will restart containers, continue?" || return 1 
     docker compose pull "$@" && docker compose down "$@" && dcul "$@"
 }
 
-alias dstop='docker stop $(docker ps -q)'
-alias dcd='docker compose down'
+dccr() {
+    confirm "This will restart containers, continue?" || return 1
+    docker compose down "$@" && dcul "$@"
+}
+
+alias dstop='confirm "This will stop all containers, continue?" && docker stop $(docker ps -q)'
+alias dcd='confirm "This will stop containers, continue?" && docker compose down'
 alias dcb='docker compose build'
 alias dclf='docker compose logs -f'
 alias updated='sudo apt update && sudo apt upgrade -y'
