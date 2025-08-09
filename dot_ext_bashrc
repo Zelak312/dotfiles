@@ -25,6 +25,7 @@ dccr() {
 
 alias dstop='confirm "This will stop all containers, continue?" && docker stop $(docker ps -q)'
 alias dcd='confirm "This will stop containers, continue?" && docker compose down'
+alias dcp='docker compose pull'
 alias dcb='docker compose build'
 alias dclf='docker compose logs -f'
 alias updated='sudo apt update && sudo apt upgrade -y'
