@@ -9,15 +9,18 @@ confirm() {
   [[ "$ans" == [Yy] ]]
 }
 
+# Up docker compose in deamon and follow logs
 dcul() {
     docker compose up -d "$@" && docker compose logs -f "$@"
 }
 
+# Update docker compose and restart them
 dcupd() {
     confirm "This will restart containers, continue?" || return 1 
     docker compose pull "$@" && docker compose down "$@" && dcul "$@"
 }
 
+# Clean restart docker compose by downing and dcul
 dccr() {
     confirm "This will restart containers, continue?" || return 1
     docker compose down "$@" && dcul "$@"
