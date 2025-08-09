@@ -29,6 +29,7 @@ alias dcb='docker compose build'
 alias dclf='docker compose logs -f'
 alias updated='sudo apt update && sudo apt upgrade -y'
 alias chezmoi_pull='chezmoi git -- pull'
+alias disk_usage='ncdu'
 
 # Extended cd functionalities with auto ls
 cd() {
