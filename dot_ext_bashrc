@@ -35,6 +35,36 @@ alias updated='sudo apt update && sudo apt upgrade -y'
 alias chezmoi_pull='chezmoi git -- pull'
 alias disk_usage='ncdu'
 
+# Build docker for registry
+db_registry() {
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        echo "Usage: db_registry <name:tag> <docker context>"
+        return 0
+    fi
+    
+    if [ "$#" -lt 2 ]; then
+        echo "Missing arguments, use --help"
+        return 1
+    fi
+
+    docker build -t registry.i.zelak.dev/$1 $2
+}
+
+# Push docker for registry
+dp_registry() {
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        echo "Usage: dp_registry <name:tag>"
+        return 0
+    fi
+    
+    if [ "$#" -lt 1 ]; then
+        echo "Missing arguments, use --help"
+        return 1
+    fi
+
+    docker push registry.i.zelak.dev/$1
+}
+
 # Extended cd functionalities with auto ls
 cd() {
     if [[ $1 == ..[0-9]* ]]; then
