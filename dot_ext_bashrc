@@ -3,20 +3,67 @@ command -v batcat >/dev/null 2>&1 && {
     alias bat='batcat'
 }
 
+confirm() {
+  local message="${1:-Are you sure?}"
+  read -p "$message [y/N] " ans
+  [[ "$ans" == [Yy] ]]
+}
+
+# Up docker compose in deamon and follow logs
 dcul() {
     docker compose up -d "$@" && docker compose logs -f "$@"
 }
 
+# Update docker compose and restart them
 dcupd() {
+    confirm "This will restart containers, continue?" || return 1 
     docker compose pull "$@" && docker compose down "$@" && dcul "$@"
 }
 
-alias dstop='docker stop $(docker ps -q)'
-alias dcd='docker compose down'
+# Clean restart docker compose by downing and dcul
+dccr() {
+    confirm "This will restart containers, continue?" || return 1
+    docker compose down "$@" && dcul "$@"
+}
+
+alias dstop='confirm "This will stop all containers, continue?" && docker stop $(docker ps -q)'
+alias dcd='confirm "This will stop containers, continue?" && docker compose down'
+alias dcp='docker compose pull'
 alias dcb='docker compose build'
 alias dclf='docker compose logs -f'
 alias updated='sudo apt update && sudo apt upgrade -y'
 alias chezmoi_pull='chezmoi git -- pull'
+alias disk_usage='ncdu'
+
+# Build docker for registry
+db_registry() {
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        echo "Usage: db_registry <name:tag> <docker context>"
+        return 0
+    fi
+    
+    if [ "$#" -lt 2 ]; then
+        echo "Missing arguments, use --help"
+        return 1
+    fi
+
+    docker build -t registry.i.zelak.dev/$1 $2
+}
+
+# Push docker for registry
+dp_registry() {
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        echo "Usage: dp_registry <name:tag>"
+        return 0
+    fi
+    
+    if [ "$#" -lt 1 ]; then
+        echo "Missing arguments, use --help"
+        return 1
+    fi
+
+    docker push registry.i.zelak.dev/$1
+}
 
 # Extended cd functionalities with auto ls
 cd() {
