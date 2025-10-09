@@ -3,18 +3,18 @@ def confirm [message: string = ""] {
   return ($ans in [Y y])
 }
 
-def dc [] {
+def "docker-compose" [] {
   "Docker Compose Utilities"
 }
 
-def "dc up-log" [service?: string] {
+def "docker-compose up-log" [service?: string] {
   match $service {
     null => { docker compose up -d; docker compose logs -f }
     _ => { docker compose up -d $service; docker compose logs -f $service }
   }
 }
 
-def "dc update" [service?: string] {
+def "docker-compose update" [service?: string] {
   if not (confirm "This will restart containers, continue?") {
     return
   }
@@ -25,7 +25,7 @@ def "dc update" [service?: string] {
   }
 }
 
-def "dc clean-restart" [service?: string] {
+def "docker-compose clean-restart" [service?: string] {
   if not (confirm "This will restart containers, continue?") {
     return
   }
@@ -36,18 +36,18 @@ def "dc clean-restart" [service?: string] {
   }
 }
 
-def db [] {
+def "docker-build" [] {
   "Docker Build Utilities"
 }
 
-def "db reg-build" [
+def "docker-build reg-build" [
   name_tag: string
   docker_context: string = "."
 ] {
   docker build -t $"registry.i.zelak.dev/($name_tag)" $"($docker_context)"
 }
 
-def "db reg-push" [
+def "docker-build reg-push" [
   name_tag: string
 ] {
   docker push $"registry.i.zelak.dev/($name_tag)"
