@@ -16,3 +16,7 @@
 #
 # You can remove these comments if you want or leave
 # them for future reference.
+
+$env.LANG = 'en_US.UTF-8'
+$env.LC_ALL = 'en_US.UTF-8'
+$env.PATH ++= ['~/bin']

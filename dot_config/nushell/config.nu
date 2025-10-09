@@ -20,3 +20,5 @@ $env.config.buffer_editor = "vim"
 
 mkdir ($nu.data-dir | path join "vendor/autoload")
 starship init nu | save -f ($nu.data-dir | path join "vendor/autoload/starship.nu")
+
+source ~/.config/nushell/utils.nu
