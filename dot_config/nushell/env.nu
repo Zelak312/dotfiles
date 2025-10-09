@@ -21,6 +21,6 @@ $env.LANG = 'en_US.UTF-8'
 $env.LC_ALL = 'en_US.UTF-8'
 $env.PATH ++= ['~/bin']
 
-if (path exists env.specific.nu) {
-  source env.specific.nu
+if ("~/.config/nushell/env.specific.nu" | path exists) {
+  source ~/.config/nushell/env.specific.nu
 }
