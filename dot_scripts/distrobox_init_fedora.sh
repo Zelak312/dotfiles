@@ -1,13 +1,12 @@
 # nushell install
-# maybe needed but seems to already by
-# installed if on host (will see)
-#echo "[gemfury-nushell]
-#name=Gemfury Nushell Repo
-#baseurl=https://yum.fury.io/nushell/
-#enabled=1
-#gpgcheck=0
-#gpgkey=https://yum.fury.io/nushell/gpg.key" | sudo tee /etc/yum.repos.d/fury-nushell.repo
-#sudo dnf install -y nushell
+echo "[gemfury-nushell]
+name=Gemfury Nushell Repo
+baseurl=https://yum.fury.io/nushell/
+enabled=1
+gpgcheck=0
+gpgkey=https://yum.fury.io/nushell/gpg.key" | tee /etc/yum.repos.d/fury-nushell.repo
+dnf remove -y nu
+dnf install -y nushell
 
 # vim install
 dnf install -y vim
