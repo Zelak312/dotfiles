@@ -8,6 +8,9 @@ gpgkey=https://yum.fury.io/nushell/gpg.key" | tee /etc/yum.repos.d/fury-nushell.
 dnf remove -y nu
 dnf install -y nushell
 
+# git
+dnf install -y git
+
 # vim install
 dnf install -y vim
 
