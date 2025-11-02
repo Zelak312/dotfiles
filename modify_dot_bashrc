@@ -1,0 +1,38 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- $managedBlockStart := "# BEGIN CHEZMOI MANAGED BLOCK" -}}
+{{- $managedBlockEnd := "# END CHEZMOI MANAGED BLOCK" -}}
+{{- $newManagedContent := `# BEGIN CHEZMOI MANAGED BLOCK
+# Add your custom content here
+export PATH=$PATH:~/bin
+source ~/.ext_bashrc
+# END CHEZMOI MANAGED BLOCK` -}}
+
+{{- $stdin := .chezmoi.stdin -}}
+
+{{- /* Check if the managed block exists */ -}}
+{{- if and (contains $managedBlockStart $stdin) (contains $managedBlockEnd $stdin) -}}
+  {{- /* Use a simple approach: split by newlines and rebuild */ -}}
+  {{- $lines := splitList "\n" $stdin -}}
+  {{- $inBlock := false -}}
+  {{- $beforeLines := list -}}
+  {{- $afterLines := list -}}
+  {{- $foundEnd := false -}}
+  {{- range $lines -}}
+    {{- if eq . $managedBlockStart -}}
+      {{- $inBlock = true -}}
+    {{- else if eq . $managedBlockEnd -}}
+      {{- $inBlock = false -}}
+      {{- $foundEnd = true -}}
+    {{- else if not $inBlock -}}
+      {{- if not $foundEnd -}}
+        {{- $beforeLines = append $beforeLines . -}}
+      {{- else -}}
+        {{- $afterLines = append $afterLines . -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- join "\n" $beforeLines }}{{ if $beforeLines }}{{ "\n" }}{{ end }}{{ $newManagedContent }}{{ if $afterLines }}{{ "\n" }}{{ join "\n" $afterLines }}{{ end -}}
+{{- else -}}
+  {{- /* Block doesnt exist, add it at the end */ -}}
+  {{- $stdin | trimSuffix "\n" }}{{ if $stdin }}{{ "\n\n" }}{{ end }}{{ $newManagedContent }}{{ "\n" -}}
+{{- end -}}

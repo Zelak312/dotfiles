@@ -1,0 +1,587 @@
+# Check if the command 'batcat' exists
+command -v batcat >/dev/null 2>&1 && {
+    alias bat='batcat'
+}
+
+confirm() {
+  local message="${1:-Are you sure?}"
+  read -p "$message [y/N] " ans
+  [[ "$ans" == [Yy] ]]
+}
+
+# Up docker compose in deamon and follow logs
+dcul() {
+    docker compose up -d "$@" && docker compose logs -f "$@"
+}
+
+# Update docker compose and restart them
+dcupd() {
+    confirm "This will restart containers, continue?" || return 1 
+    docker compose pull "$@" && docker compose down "$@" && dcul "$@"
+}
+
+# Clean restart docker compose by downing and dcul
+dccr() {
+    confirm "This will restart containers, continue?" || return 1
+    docker compose down "$@" && dcul "$@"
+}
+
+alias dstop='confirm "This will stop all containers, continue?" && docker stop $(docker ps -q)'
+alias dcd='confirm "This will stop containers, continue?" && docker compose down'
+alias dcp='docker compose pull'
+alias dcb='docker compose build'
+alias dclf='docker compose logs -f'
+alias updated='sudo apt update && sudo apt upgrade -y'
+alias chezmoi_pull='chezmoi git -- pull'
+alias disk_usage='ncdu'
+
+# Build docker for registry
+db_registry() {
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        echo "Usage: db_registry <name:tag> <docker context>"
+        return 0
+    fi
+    
+    if [ "$#" -lt 2 ]; then
+        echo "Missing arguments, use --help"
+        return 1
+    fi
+
+    docker build -t registry.i.zelak.dev/$1 $2
+}
+
+# Push docker for registry
+dp_registry() {
+    if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+        echo "Usage: dp_registry <name:tag>"
+        return 0
+    fi
+    
+    if [ "$#" -lt 1 ]; then
+        echo "Missing arguments, use --help"
+        return 1
+    fi
+
+    docker push registry.i.zelak.dev/$1
+}
+
+# Extended cd functionalities with auto ls
+cd() {
+    if [[ $1 == ..[0-9]* ]]; then
+        local count="${1:2}"
+        local target=""
+        for ((i=0; i<count; i++)); do
+            target+="../"
+        done
+        builtin cd "$target"
+    else
+        builtin cd "$@"
+    fi
+    
+    # Only ls if in an interactive shell
+    if [[ $- == *i* ]]; then
+        ls
+    fi
+}
+
+# Enable tab completion for directories
+complete -o nospace -o dirnames cd
+
+# Used for function scripts
+_cd() {
+    builtin cd "$@"
+}
+
+# Auto cd when making dir
+mkcd() {
+  mkdir -p "$1"
+  cd "$1"
+}
+
+# Backup quickly files
+backup() {
+    local backup_name=""
+    local files=()
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --name|-n)
+                backup_name="$2"
+                shift 2
+                ;;
+            *)
+                files+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    # Check if files are provided
+    if [[ ${#files[@]} -eq 0 ]]; then
+        echo "Usage: backup [--name custom_name] file1 file2 ..."
+        return 1
+    fi
+
+    # Set default name if not provided
+    if [[ -z "$backup_name" ]]; then
+        backup_name="backup_$(date +%Y%m%d_%H%M%S)"
+    fi
+
+    # Add .tar.gz extension if not present
+    [[ "$backup_name" != *.tar.gz ]] && backup_name="${backup_name}.tar.gz"
+
+    # Create the backup
+    if tar -czf "$backup_name" "${files[@]}"; then
+        echo "✓ Backup created: $backup_name"
+    else
+        echo "✗ Backup failed"
+        return 1
+    fi
+}
+
+# Check if ports are used
+check_ports() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: check_ports <range>"
+        return 1
+    fi
+    ss -tuln | grep ":$1"
+}
+
+# Diff with stash
+git_stash_diff() {
+    if [ $# -eq 0 ]; then
+        git stash show -p
+    else
+        git stash show -p stash@{"$1"}
+    fi
+}
+
+# Clones a git repot to /git by default
+clone() {
+    local ROOT_BASE="$HOME/git"
+    local CUSTOM_BASE=""
+    local NO_AUTO_CD=0
+
+    # Split arguments at '--'
+    local ARGS_BEFORE=()
+    local ARGS_AFTER=()
+    local SEEN_DASH_DASH=0
+
+    for arg in "$@"; do
+        if (( SEEN_DASH_DASH )); then
+            ARGS_AFTER+=("$arg")
+        elif [[ "$arg" == "--" ]]; then
+            SEEN_DASH_DASH=1
+        else
+            ARGS_BEFORE+=("$arg")
+        fi
+    done
+
+    # Parse options (ARGS_BEFORE)
+    local PARSED
+    PARSED=$(getopt -o b:nh -l base:,no-auto-cd,help -- "${ARGS_BEFORE[@]}") || return 1
+    eval set -- "$PARSED"
+
+    while true; do
+        case "$1" in
+            -b|--base)
+                CUSTOM_BASE="$2"
+                shift 2
+                ;;
+            -n|--no-auto-cd)
+                NO_AUTO_CD=1
+                shift
+                ;;
+            -h|--help)
+                echo "Usage: clone [--base <subdir>] <git-repo> -- [git clone options]"
+        	echo
+        	git clone --help
+        	echo
+        	echo "Additional Options:"
+        	echo "  -b, --base <subdir>     Clone into $ROOT_BASE/<subdir>/<repo-name>"
+        	echo "                          Default clone path is: $ROOT_BASE/<repo-name>"
+        	echo "  -n, --no-auto-cd        Stops from auto cding into the directory"
+        	echo "  -h, --help              Show this help message"
+                return 0
+                ;;
+            --)
+                shift
+                break
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    local REPO_URL="$1"
+    if [[ -z "$REPO_URL" ]]; then
+        echo "Error: missing <git-repo>"
+        return 1
+    fi
+    shift
+
+    local REPO_NAME
+    REPO_NAME="$(basename -s .git "$REPO_URL")"
+
+    local DEST="$ROOT_BASE"
+    [[ -n "$CUSTOM_BASE" ]] && DEST="$DEST/$CUSTOM_BASE"
+    DEST="$DEST/$REPO_NAME"
+
+    mkdir -p "$(dirname "$DEST")"
+
+    # Run git clone
+    git clone "$REPO_URL" "$DEST" "${ARGS_AFTER[@]}"
+
+    # Auto cd if not disabled
+    if (( NO_AUTO_CD == 0 )); then
+       cd "$DEST" || return
+    fi
+}
+
+# ---------------------
+# Compress utilities
+# ---------------------
+
+# Check if a compressed folder is a zip bomb
+check_archive_bomb() {
+    local quiet=false
+    local file=""
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -q|--quiet)
+                quiet=true
+                shift
+                ;;
+            -*)
+                echo "Unknown option: $1" >&2
+                return 1
+                ;;
+            *)
+                if [[ -z "$file" ]]; then
+                    file="$1"
+                else
+                    echo "Multiple files specified. Only one file allowed." >&2
+                    return 1
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -z "$file" || ! -f "$file" ]]; then
+        if [[ "$quiet" == false ]]; then
+            echo "Usage: check_archive_bomb [-q|--quiet] <archive-file>"
+        fi
+        return 1
+    fi
+
+    local ext="${file##*.}"
+    local entries=()
+
+    case "$file" in
+        *.zip)
+            if ! unzip -t "$file" >/dev/null 2>&1; then
+                [[ "$quiet" == false ]] && echo "Error: Invalid or corrupted ZIP file"
+                return 1
+            fi
+            if ! mapfile -t entries < <(unzip -l "$file" 2>/dev/null | awk 'NR>3 && NF>=4 {print $NF}' | grep -v '^$' | grep -vE '^-+$' | sed -E 's|^/+||' | sed -E 's|/$||'); then
+                [[ "$quiet" == false ]] && echo "Error: Failed to read ZIP contents"
+                return 1
+            fi
+            ;;
+        *.tar|*.tar.gz|*.tgz|*.tar.bz2|*.tbz2|*.tar.xz)
+            if ! tar -tf "$file" >/dev/null 2>&1; then
+                [[ "$quiet" == false ]] && echo "Error: Invalid or corrupted TAR file"
+                return 1
+            fi
+            if ! mapfile -t entries < <(tar -tf "$file" 2>/dev/null | sed -E 's|^/+||' | sed -E 's|/$||'); then
+                [[ "$quiet" == false ]] && echo "Error: Failed to read TAR contents"
+                return 1
+            fi
+            ;;
+        *.rar)
+            if ! unrar t "$file" >/dev/null 2>&1; then
+                [[ "$quiet" == false ]] && echo "Error: Invalid or corrupted RAR file"
+                return 1
+            fi
+            if ! mapfile -t entries < <(unrar lb "$file" 2>/dev/null | sed -E 's|^/+||' | sed -E 's|/$||'); then
+                [[ "$quiet" == false ]] && echo "Error: Failed to read RAR contents"
+                return 1
+            fi
+            ;;
+        *.7z)
+            if ! 7z t "$file" >/dev/null 2>&1; then
+                [[ "$quiet" == false ]] && echo "Error: Invalid or corrupted 7Z file"
+                return 1
+            fi
+            if ! mapfile -t entries < <(7z l -ba "$file" 2>/dev/null | awk 'NF>=6 {print $NF}' | sed -E 's|^/+||' | sed -E 's|/$||'); then
+                [[ "$quiet" == false ]] && echo "Error: Failed to read 7Z contents"
+                return 1
+            fi
+            ;;
+        *)
+            [[ "$quiet" == false ]] && echo "Unsupported archive type: $file"
+            return 1
+            ;;
+    esac
+
+    if [[ ${#entries[@]} -eq 0 ]]; then
+        [[ "$quiet" == false ]] && echo "❓ Could not detect archive contents properly."
+        return 1
+    fi
+
+    # Filter out empty/whitespace-only entries and get root-level items
+    local filtered_entries=()
+    for entry in "${entries[@]}"; do
+        # Remove leading/trailing whitespace
+        entry=$(echo "$entry" | sed -E 's/^[[:space:]]+|[[:space:]]+$//')
+        if [[ -n "$entry" ]]; then
+            # Get root-level item (first component of path)
+            local root_item
+            if [[ "$entry" == */* ]]; then
+                root_item="${entry%%/*}"
+            else
+                root_item="$entry"
+            fi
+            if [[ -n "$root_item" ]]; then
+                filtered_entries+=("$root_item")
+            fi
+        fi
+    done
+
+    if [[ ${#filtered_entries[@]} -eq 0 ]]; then
+        [[ "$quiet" == false ]] && echo "❓ No valid root-level items found in archive."
+        return 1
+    fi
+
+    # Remove duplicates using associative array
+    declare -A seen
+    local unique_entries=()
+    for entry in "${filtered_entries[@]}"; do
+        if [[ -z "${seen[$entry]}" ]]; then
+            seen["$entry"]=1
+            unique_entries+=("$entry")
+        fi
+    done
+
+    local count=${#unique_entries[@]}
+
+    # Return codes:
+    # 0 = Safe (single root-level item)
+    # 1 = Not safe (multiple root-level items) or error
+    
+    if [[ $count -eq 1 ]]; then
+        if [[ "$quiet" == false ]]; then
+            echo "✅ Safe: All files are under a single top-level item: ${unique_entries[0]}"
+        fi
+        return 0
+    else
+        if [[ "$quiet" == false ]]; then
+            echo "⚠️  Not safe: $count root-level items detected:"
+            printf "  - %s\n" "${unique_entries[@]}"
+            echo "Extract to a dedicated directory to avoid clutter!"
+        fi
+        return 1
+    fi
+}
+
+# Exract compress archive safely
+ex() {
+    if [ ! -f "$1" ]; then
+        echo "'$1' is not a valid file"
+        return 1
+    fi
+
+    local file="$1"
+    local basename_no_ext
+    local safe_extraction=true
+    local file_to_extract="$file"
+    
+    # Get basename without extension for potential safe directory
+    basename_no_ext=$(basename "$file")
+    # Remove common archive extensions (chained removals handle multiple extensions)
+    basename_no_ext=${basename_no_ext%%.tar.bz2}
+    basename_no_ext=${basename_no_ext%%.tar.gz}
+    basename_no_ext=${basename_no_ext%%.tar.xz}
+    basename_no_ext=${basename_no_ext%%.tar.zst}
+    basename_no_ext=${basename_no_ext%%.tbz2}
+    basename_no_ext=${basename_no_ext%%.tgz}
+    basename_no_ext=${basename_no_ext%%.zip}
+    basename_no_ext=${basename_no_ext%%.rar}
+    basename_no_ext=${basename_no_ext%%.7z}
+    basename_no_ext=${basename_no_ext%%.tar}
+    basename_no_ext=${basename_no_ext%%.bz2}
+    basename_no_ext=${basename_no_ext%%.gz}
+    basename_no_ext=${basename_no_ext%%.Z}
+    basename_no_ext=${basename_no_ext%%.deb}
+
+    # Check if it's a supported archive format for bomb detection
+    case "$file" in
+        *.zip|*.tar|*.tar.gz|*.tgz|*.tar.bz2|*.tbz2|*.tar.xz|*.rar|*.7z)
+            if ! check_archive_bomb -q "$file"; then
+                safe_extraction=false
+                echo "⚠️  Archive bomb detected! Extracting to safe directory: $basename_no_ext/"
+                
+                # Create safe extraction directory
+                if [[ -d "$basename_no_ext" ]]; then
+                    echo "Warning: Directory '$basename_no_ext' already exists. Extracting into it anyway."
+                else
+                    mkdir -p "$basename_no_ext"
+                fi
+                _cd "$basename_no_ext" || {
+                    echo "Error: Failed to create/enter directory '$basename_no_ext'"
+                    return 1
+                }
+                echo "Extracting to: $(pwd)/"
+                file_to_extract="../$file"
+            fi
+            ;;
+    esac
+
+    # Extract based on file type
+    local exit_code=0
+    case "$file" in
+        *.tar.bz2|*.tbz2)   tar xjf "$file_to_extract" ;;
+        *.tar.gz|*.tgz)     tar xzf "$file_to_extract" ;;
+        *.tar.xz)           tar xf "$file_to_extract" ;;
+        *.tar)              tar xf "$file_to_extract" ;;
+        *.bz2)              bunzip2 "$file_to_extract" ;;
+        *.gz)               gunzip "$file_to_extract" ;;
+        *.rar)              unrar x "$file_to_extract" ;;
+        *.zip)              unzip "$file_to_extract" ;;
+        *.Z)                uncompress "$file_to_extract" ;;
+        *.7z)               7z x "$file_to_extract" ;;
+        *.deb)              ar x "$file_to_extract" ;;
+        *.tar.zst)          unzstd "$file_to_extract" ;;
+        *)           
+            if [[ "$safe_extraction" == false ]]; then
+                _cd .. # Go back if we created a directory
+                rmdir "$basename_no_ext" 2>/dev/null # Remove empty directory
+            fi
+            echo "'$file' cannot be extracted via ex()"
+            return 1
+            ;;
+    esac
+    
+    exit_code=$?
+    
+    # Handle post-extraction cleanup and messages
+    if [[ "$safe_extraction" == false ]]; then
+        _cd ..
+        if [[ $exit_code -eq 0 ]]; then
+            echo "✅ Extraction completed safely in directory: $basename_no_ext/"
+        else
+            echo "❌ Extraction failed"
+        fi
+    else
+        if [[ $exit_code -eq 0 ]]; then
+            echo "✅ Safe extraction completed"
+        else
+            echo "❌ Extraction failed"
+        fi
+    fi
+    
+    return $exit_code
+}
+
+# ---------------------
+
+# ---------------------
+# Saving Path Utilities
+# ---------------------
+
+declare -A saved_dirs
+
+# Save path
+spwd() {
+    local name="default"
+    if [[ ! -z "$1" ]]; then
+        name="$1"
+    fi
+    saved_dirs["$name"]=$(pwd)
+    echo "Saved current directory as '$name'."
+}
+
+# Restore path
+rpwd() {
+    local name="default"
+    if [[ ! -z "$1" ]]; then
+        name="$1"
+    fi
+
+    if [[ ! -z "${saved_dirs["$name"]}" ]]; then
+        cd "${saved_dirs["$name"]}" || return 1
+    else
+        echo "No saved directory found for '$name'."
+    fi
+}
+
+# List paths
+lpwd() {
+    for name in "${!saved_dirs[@]}"; do
+        echo "$name: ${saved_dirs[$name]}"
+    done
+}
+
+# -------------------
+
+help_ext() {
+    local file="${1:-${BASH_SOURCE[0]}}"
+
+    if [[ ! -f "$file" ]]; then
+        echo "Error: File '$file' not found!"
+        return 1
+    fi
+    
+    echo "=== ALIASES ==="
+    echo
+    
+    # List all aliases without comments
+    grep "^[[:space:]]*alias" "$file" | while read -r alias_line; do
+        echo "$alias_line"
+    done
+    
+    echo
+    echo "=== FUNCTIONS ==="
+    echo
+    
+    # Process functions with comments
+    while IFS= read -r line_num; do
+        # Get the function line
+        func_line=$(sed -n "${line_num}p" "$file")
+        
+        # Look for comment in the line immediately before
+        prev_line_num=$((line_num - 1))
+        if [[ $prev_line_num -gt 0 ]]; then
+            prev_line=$(sed -n "${prev_line_num}p" "$file")
+            # Check if it's a comment line (starts with # after optional whitespace)
+            if [[ "$prev_line" =~ ^[[:space:]]*#[[:space:]]*(.+) ]]; then
+                comment="${BASH_REMATCH[1]}"
+                echo "$func_line"
+                echo "  → $comment"
+            else
+                echo "$func_line"
+                echo "  → [MISSING DESCRIPTION]"
+            fi
+        else
+            echo "$func_line"
+            echo "  → [MISSING DESCRIPTION]"
+        fi
+        echo
+        
+    done < <(grep -n -E "^[[:space:]]*(function[[:space:]]+[a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\))" "$file" | cut -d: -f1)
+}
+
+# On startup
+# Check if tmux is installed and automatically start tmux on SSH login
+if command -v tmux &> /dev/null && [ -z "$TMUX" ] && [ -n "$SSH_CONNECTION" ]; then
+    # Check if connection doesn't come from vscode
+    if [[ -z "$VSCODE_IPC_HOOK_CLI" && "$TERM_PROGRAM" != "vscode" ]]; then
+        tmux -u attach-session -t ssh_tmux || tmux -u new-session -s ssh_tmux
+    fi
+fi
