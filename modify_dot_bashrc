@@ -15,8 +15,12 @@ if [[ $- == *i* ]]; then
     fi    
 
     if [[ -t 0 || -n "$SSH_CONNECTION" || -n "$SSH_TTY" ]]; then
-      export NU_STARTED=1
-      exec nu
+      
+      # check if nu is installed
+      if command -v nu >/dev/null 2>&1; then
+        export NU_STARTED=1
+        exec nu
+      fi
     fi
   fi
 fi
