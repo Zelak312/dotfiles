@@ -5,6 +5,25 @@
 # Add your custom content here
 export PATH=$PATH:~/bin
 source ~/.ext_bashrc
+
+if [[ $- == *i* ]]; then
+  # prevent loops
+  if [ -z "$NU_STARTED" ]; then
+ 
+    if [[ -n "$VSCODE_PID" || "$TERM_PROGRAM" == "vscode" ]]; then
+      return
+    fi    
+
+    if [[ -t 0 || -n "$SSH_CONNECTION" || -n "$SSH_TTY" ]]; then
+      
+      # check if nu is installed
+      if command -v nu >/dev/null 2>&1; then
+        export NU_STARTED=1
+        exec nu
+      fi
+    fi
+  fi
+fi
 # END CHEZMOI MANAGED BLOCK` -}}
 
 {{- $stdin := .chezmoi.stdin -}}
