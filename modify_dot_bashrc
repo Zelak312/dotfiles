@@ -4,7 +4,7 @@
 {{- $newManagedContent := `# BEGIN CHEZMOI MANAGED BLOCK
 # Add your custom content here
 export PATH=$PATH:~/bin
-source ~/.ext_bashrc
+#source ~/.ext_bashrc
 
 if [[ $- == *i* ]]; then
   # prevent loops
