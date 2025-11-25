@@ -108,7 +108,19 @@ def "check ports" [
   | where ($it.Local | split row ":" | last | str starts-with $range)
 }
 
-def "g stash-diff" [
+def "git chore" [
+  branch_name: string
+] {
+  git switch -c $"chore/($branch_name)"
+}
+
+def "git feature" [
+  branch_name: string
+] {
+  git switch -c $"feature/($branch_name)"
+}
+
+def "git stash-diff" [
   stash_number?: int
 ] {
   match $stash_number {
@@ -117,7 +129,7 @@ def "g stash-diff" [
   }
 }
 
-def --env "g clone" [
+def --env "git clone" [
   --no-cd (-n)
   --base (-b): string
   url: string
@@ -143,7 +155,7 @@ def --env "g clone" [
   
   $r_base = $r_base | path join $repo_name
   mkdir $r_base
-  git clone $url $r_base ...$git_args
+  ^git clone $url $r_base ...$git_args
 
   if not $no_cd {
     export-env {
