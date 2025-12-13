@@ -41,10 +41,11 @@ def "docker-build" [] {
 }
 
 def "docker-build reg-build" [
-  name_tag: string
-  docker_context: string = "."
+    name_tag: string
+    docker_context: string = "."
+    --file (-f): string = "Dockerfile"
 ] {
-  docker build -t $"registry.i.zelak.dev/($name_tag)" $"($docker_context)"
+    docker build -t $"registry.i.zelak.dev/($name_tag)" -f $"($file)" $"($docker_context)"
 }
 
 def "docker-build reg-push" [
